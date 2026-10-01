@@ -5,14 +5,25 @@
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.bootstrap import seed_countersign
 from app.config import settings
 from app.routers import ROUTERS
 from app.store import store
 
-app = FastAPI(title="市政道路桥梁养护管理平台", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 会签桌示例会议与同步落点在服务启动时通过真实业务流程引导
+    seed_countersign()
+    yield
+
+
+app = FastAPI(title="市政道路桥梁养护管理平台", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

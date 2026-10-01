@@ -10,6 +10,7 @@ from app.routers import road_section as router_road_section
 from app.routers import patrol as router_patrol
 from app.routers import pavement as router_pavement
 from app.routers import bridge as router_bridge
+from app.routers import countersign as router_countersign
 from app.routers import bridge_info as router_bridge_info
 from app.routers import tunnel as router_tunnel
 from app.routers import traffic_facility as router_traffic_facility
@@ -25,4 +26,4 @@ from app.routers import project as router_project
 from app.routers import vehicle as router_vehicle
 from app.routers import material as router_material
 
-ROUTERS = [router_road_section, router_patrol, router_pavement, router_bridge, router_bridge_info, router_tunnel, router_traffic_facility, router_drainage, router_green, router_lighting, router_winter, router_flood, router_slope, router_expansion, router_bearing, router_project, router_vehicle, router_material]
+ROUTERS = [router_road_section, router_patrol, router_pavement, router_bridge, router_countersign, router_bridge_info, router_tunnel, router_traffic_facility, router_drainage, router_green, router_lighting, router_winter, router_flood, router_slope, router_expansion, router_bearing, router_project, router_vehicle, router_material]

@@ -53,6 +53,7 @@ npm run dev
 | 日常巡查 | `patrol` | 巡查记录 | 巡查编号、巡查路段、巡查日期 |
 | 路面病害 | `pavement` | 病害记录 | 病害编号、所属路段、病害类型 |
 | 桥梁定检 | `bridge` | 检测记录 | 检测编号、桥梁名称、检测类型 |
+| 检测记录会签桌 | `countersign` | 会签会议 | 会签号、检测编号、桥梁名称、限载结论、桥面剖切图证据 |
 | 桥梁档案 | `bridge_info` | 桥梁 | 桥梁编号、桥梁名称、桥型结构 |
 | 隧道管养 | `tunnel` | 隧道 | 隧道编号、隧道名称、隧道长度 |
 | 交安设施 | `traffic_facility` | 交安设施 | 设施编号、设施类型、所属路段 |
@@ -74,3 +75,17 @@ npm run dev
   `backend/app/routers/<模块>.py`，业务规则在 `backend/app/services/<模块>.py`。
 - 列表接口统一返回 `{ items, total, page, size }`，动作接口统一返回 `{ ok, message }`。
 - 状态流转只允许在 `app/services` 里改，路由层不做业务判断。
+
+### 检测记录会签桌约定
+
+- 以桥面剖切图为主对象，单向状态图：`待证据 → 待结论 → 已会签 → 已派单`；
+  撤回不回退，旧会议进 `已撤回` 终态并派生新一轮会签（`supersedes` 记录来源）。
+- 检查员录入检测编号/桥梁名称并在剖切图上放置病害证据（`POST /api/countersign/{id}/evidence`），
+  主管才能选择限载结论（`POST /api/countersign/{id}/decision`），最后一步才生成工程任务。
+- 主管签认按会议级事务锁串行：只放行一份决定，其余签认进等待队列；
+  同一会签令牌重发幂等，断线后凭会签号 `GET /api/countersign/recover` 恢复。
+- 会签结论同步到 `bridge`（定检档案）、`patrol`（巡检通知）、`project`（工程清单），
+  既有桥位 `bridge_info` 保留「上次评定等级」，另挂「专项会签等级」；
+  专项与日常评分分档冲突时以专项会签为准（`等级冲突=true`）。
+- 风险看板 `GET /api/countersign/risk-board` 随结论实时汇总；自测见
+  `backend/tests/test_countersign.py`。
