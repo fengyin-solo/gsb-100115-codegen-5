@@ -31,12 +31,31 @@
       <thead>
         <tr>
           <th v-for="column in columns" :key="column">{{ column }}</th>
+          <th>会签等级与历史</th>
           <th>可执行动作</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="String(row.id)">
           <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
+          <td class="grade-cell">
+            <template v-if="row['最新专项等级'] || row['限载结论']">
+              <div class="grade-current">
+                <span class="grade-special">{{ row['最新专项等级'] }}</span>
+                <span class="grade-conclusion">{{ row['限载结论'] }}</span>
+                <span class="grade-code">{{ row['最新会签号'] }}</span>
+              </div>
+              <ul v-if="historyOf(row).length" class="grade-history">
+                <li v-for="(h, i) in historyOf(row)" :key="i">{{ h }}</li>
+              </ul>
+            </template>
+            <div v-else-if="historyOf(row).length" class="grade-history-only">
+              <ul class="grade-history">
+                <li v-for="(h, i) in historyOf(row)" :key="i">{{ h }}</li>
+              </ul>
+            </div>
+            <span v-else class="muted">尚未有专项会签</span>
+          </td>
           <td class="row-actions">
             <button
               v-for="action in actions"
@@ -50,7 +69,7 @@
           </td>
         </tr>
         <tr v-if="!rows.length">
-          <td :colspan="columns.length + 1" class="empty-state">暂无桥梁档案数据，可先登记桥梁</td>
+          <td :colspan="columns.length + 2" class="empty-state">暂无桥梁档案数据，可先登记桥梁</td>
         </tr>
       </tbody>
     </table>
@@ -67,7 +86,7 @@ import { onMounted, ref } from 'vue'
 
 import { request } from '@/api/client'
 
-type Row = Record<string, string | number | null>
+type Row = Record<string, any>
 
 const ENDPOINT = '/api/bridge_info'
 const columns = ["桥梁编号", "桥梁名称", "桥型结构", "跨径组合", "设计荷载", "建成年份", "上次评定等级", "桥梁状态"]
@@ -80,6 +99,11 @@ const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+function historyOf(row: Row): string[] {
+  const value = row['等级历史']
+  return Array.isArray(value) ? (value as string[]) : []
+}
 
 function resetFilters() {
   filters.value = {}
@@ -128,3 +152,15 @@ async function reload() {
 
 onMounted(reload)
 </script>
+
+<style scoped>
+.muted { color: var(--muted); font-size: 12px; }
+.grade-cell { font-size: 12px; }
+.grade-current { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.grade-special { font-weight: 700; color: #b42318; }
+.grade-conclusion { background: #fef3f2; color: #b42318; border: 1px solid #f0a39a; border-radius: 4px; padding: 0 6px; }
+.grade-code { color: var(--muted); font-size: 11px; }
+.grade-history { list-style: none; margin: 4px 0 0; padding: 0; color: var(--muted); }
+.grade-history li::before { content: '· '; }
+.grade-history-only { font-size: 12px; }
+</style>
